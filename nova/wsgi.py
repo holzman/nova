@@ -46,6 +46,9 @@ wsgi_opts = [
                  'generate log lines. The following values can be formatted '
                  'into it: client_ip, date_time, request_line, status_code, '
                  'body_length, wall_seconds.')
+    cfg.StrOpt('wsgi_url_length_limit',
+               default=65536,
+               help='Maximum length of the request URL for WSGI.')
     ]
 CONF = cfg.CONF
 CONF.register_opts(wsgi_opts)
@@ -112,7 +115,8 @@ class Server(object):
                                       protocol=self._protocol,
                                       custom_pool=self._pool,
                                       log=self._wsgi_logger,
-                                      log_format=CONF.wsgi_log_format)
+                                      log_format=CONF.wsgi_log_format,
+                                      url_length_limit=CONF.wsgi_url_length_limit)
 
     def stop(self):
         """Stop this server.
