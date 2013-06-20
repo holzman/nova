@@ -1578,7 +1578,8 @@ def _build_instance_get(context, session=None, columns_to_join=None):
     return query
 
 
-def _instances_fill_metadata(context, instances, manual_joins=None):
+def _instances_fill_metadata(context, instances, manual_joins=None,
+                             filters=None):
     """Selectively fill instances with manually-joined metadata. Note that
     instance will be converted to a dict.
 
@@ -1595,7 +1596,8 @@ def _instances_fill_metadata(context, instances, manual_joins=None):
 
     meta = collections.defaultdict(list)
     if 'metadata' in manual_joins:
-        for row in _instance_metadata_get_multi(context, uuids):
+        for row in _instance_metadata_get_multi(context, uuids,
+                                                filters=filters):
             meta[row['instance_uuid']].append(row)
 
     sys_meta = collections.defaultdict(list)
@@ -1608,7 +1610,11 @@ def _instances_fill_metadata(context, instances, manual_joins=None):
         inst = dict(inst.iteritems())
         inst['system_metadata'] = sys_meta[inst['uuid']]
         inst['metadata'] = meta[inst['uuid']]
-        filled_instances.append(inst)
+        if filters and filters.get('filter'):
+            if inst.get('metadata'):
+                filled_instances.append(inst)
+        else:
+            filled_instances.append(inst)
 
     return filled_instances
 
@@ -1746,10 +1752,6 @@ def instance_get_all_by_filters(context, filters, sort_key, sort_dir,
                                 filters, exact_match_filter_names)
 
     query_prefix = regex_filter(query_prefix, models.Instance, filters)
-    query_prefix = tag_filter(query_prefix, models.Instance,
-                              models.InstanceMetadata,
-                              models.InstanceMetadata.instance_uuid,
-                              filters)
 
     # paginate query
     if marker is not None:
@@ -1763,10 +1765,11 @@ def instance_get_all_by_filters(context, filters, sort_key, sort_dir,
                            marker=marker,
                            sort_dir=sort_dir)
 
-    return _instances_fill_metadata(context, query_prefix.all(), manual_joins)
+    return _instances_fill_metadata(context, query_prefix.all(), manual_joins,
+                                    filters)
 
 
-def tag_filter(query, model, tag_model, tag_model_col, filters):
+def tag_filter(query, tag_model, filters):
     """Applies tag filtering to a query.
 
     Returns the updated query.  This method alters filters to remove
@@ -1829,15 +1832,11 @@ def tag_filter(query, model, tag_model, tag_model_col, filters):
             val = to_list(val)
             filter_name = filter_name[4:]
 
-            subq = query.session.query(tag_model_col)
-            subq = subq.filter(tag_model.key == filter_name)
-            subq = subq.filter(tag_model.value.in_(val))
-            query = query.filter(model.uuid.in_(subq))
+            query = query.filter(tag_model.key == filter_name)
+            query = query.filter(tag_model.value.in_(val))
 
     if or_query is not None:
-        col_q = query.session.query(tag_model_col)
-        col_q = col_q.filter(or_query)
-        query = query.filter(model.uuid.in_(col_q))
+        query = query.filter(or_query)
 
     return query
 
@@ -4119,11 +4118,16 @@ def cell_get_all(context):
 ########################
 # User-provided metadata
 
-def _instance_metadata_get_multi(context, instance_uuids, session=None):
-    return model_query(context, models.InstanceMetadata,
-                       session=session).\
-                    filter(
-            models.InstanceMetadata.instance_uuid.in_(instance_uuids))
+def _instance_metadata_get_multi(context, instance_uuids, session=None,
+                                 filters=None):
+    query = model_query(context, models.InstanceMetadata,
+                        session=session).filter(
+        models.InstanceMetadata.instance_uuid.in_(instance_uuids))
+
+    if filters:
+        query = tag_filter(query, models.InstanceMetadata,
+                                  filters)
+    return query
 
 
 def _instance_metadata_get_query(context, instance_uuid, session=None):
@@ -4135,20 +4139,6 @@ def _instance_metadata_get_query(context, instance_uuid, session=None):
 def _instance_metadata_get_all_query(context, session=None,
                                      read_deleted='no', search_filts=[]):
 
-    or_query = None
-    query = model_query(context, models.InstanceMetadata, session=session,
-                        read_deleted=read_deleted)
-
-    # We want to incrementally build an OR query out of the search filters.
-    # So:
-    # {'filter':
-    #     [{'resource_id': 'i-0000001'}],
-    #     [{'key': 'foo', 'value': 'bar'}]}
-    # Should produce:
-    # AND ((instance_metadata.uuid IN ('1')) OR
-    # (instance_metadata.key IN ('foo')) OR
-    # (instance_metadata.value IN ('bar')))
-
     def make_tuple(item):
         if isinstance(item, dict):
             item = item.values()
@@ -4156,29 +4146,38 @@ def _instance_metadata_get_all_query(context, session=None,
             item = (item,)
         return item
 
-    for search_filt in search_filts:
-        subq = None
+    key = None
+    value = None
+    filters = {}
 
+    # This converts a search filter from DescribeTags to one
+    # that the methods underlying DescribeInstances will understand
+
+    for search_filt in search_filts:
         if search_filt.get('resource_id'):
             uuid = make_tuple(search_filt['resource_id'])
-            subq = models.InstanceMetadata.instance_uuid.in_(uuid)
+            filters['uuid'] = uuid
         elif search_filt.get('key'):
             key = make_tuple(search_filt['key'])
-            subq = models.InstanceMetadata.key.in_(key)
         elif search_filt.get('value'):
             value = make_tuple(search_filt['value'])
-            subq = models.InstanceMetadata.value.in_(value)
 
-        if subq is not None:
-            if or_query is None:
-                or_query = subq
-            else:
-                or_query = or_(or_query, subq)
+    if key and value:  # this is key=value
+        filters = {'filter': [{'name': 'tag:%s' % key[0], 'value': value}]}
+    elif key:
+        filters = {'filter': [{'name': 'tag-key', 'value': key}]}
+    elif value:
+        filters = {'filter': [{'name': 'tag-value', 'value': value}]}
 
-    if or_query is not None:
-        query = query.filter(or_query)
+    sort_key = 'created_at'
+    sort_dir = 'desc'
 
-    return query
+    instances = instance_get_all_by_filters(
+                    context, filters, sort_key,
+                    sort_dir, limit=None, marker=None, columns_to_join=None,
+                    session=None)
+
+    return instances
 
 
 @require_context
@@ -4197,12 +4196,8 @@ def instance_metadata_get(context, instance_uuid, session=None):
 def instance_metadata_get_all(context, search_filts=[], read_deleted="no"):
     rows = _instance_metadata_get_all_query(context,
                                        read_deleted=read_deleted,
-                                       search_filts=search_filts).all()
-
-    return [{'key': row['key'],
-             'value': row['value'],
-             'instance_id': row['instance_uuid']}
-             for row in rows]
+                                       search_filts=search_filts)
+    return rows
 
 
 @require_context

@@ -1822,18 +1822,28 @@ class InstanceMetadataTestCase(test.TestCase):
 
     def test_instance_metadata_get_all(self):
         instances = []
-        expected = []
+
+        def assertEqualUuids(instances1, instances2):
+            uuid1 = [i['uuid'] for i in instances1]
+            uuid2 = [i['uuid'] for i in instances2]
+            self.assertEqual(sorted(uuid1), sorted(uuid2))
+
         for i in range(2):
             instances.append(db.instance_create(self.ctxt,
                         {'metadata': {'key%d' % i: 'value%d' % i}}))
-            expected.append({'instance_id': instances[i]['uuid'],
-                        'key': 'key%d' % i, 'value': 'value%d' % i})
-        self.assertEqual(expected, db.instance_metadata_get_all(self.ctxt, []))
-        self.assertEqual(expected[:1], db.instance_metadata_get_all(self.ctxt,
+
+        expected = instances
+        assertEqualUuids(expected,
+                         db.instance_metadata_get_all(self.ctxt, []))
+        assertEqualUuids(expected[:1], db.instance_metadata_get_all(self.ctxt,
                                                         [{'key': 'key0'}]))
-        self.assertEqual(expected[1:2], db.instance_metadata_get_all(self.ctxt,
+        assertEqualUuids(expected[:1], db.instance_metadata_get_all(self.ctxt,
+                                                        [{'key': 'key0'},
+                                                         {'value': 'value0'}]))
+
+        assertEqualUuids(expected[1:2], db.instance_metadata_get_all(self.ctxt,
                                                         [{'value': 'value1'}]))
-        self.assertEqual(expected[:2], db.instance_metadata_get_all(self.ctxt,
+        assertEqualUuids([], db.instance_metadata_get_all(self.ctxt,
                                                         [{'value': 'value1'},
                                                          {'key': 'key0'}]))
 

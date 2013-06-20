@@ -23,6 +23,7 @@ networking and storage of VMs, and compute hosts on which they run)."""
 
 import base64
 import functools
+import itertools
 import re
 import string
 import uuid
@@ -2473,10 +2474,28 @@ class API(base.Base):
         rv = self.db.instance_metadata_get(context, instance['uuid'])
         return dict(rv.iteritems())
 
-    @wrap_check_policy
     def get_all_instance_metadata(self, context, search_filts):
         """Get all metadata."""
-        return self.db.instance_metadata_get_all(context, search_filts)
+        instances = self.db.instance_metadata_get_all(context, search_filts)
+        metadatas = []
+        for instance in instances:
+            metadata = instance.get('metadata')
+            if metadata:
+                try:
+                    check_policy(context, 'get_all_instance_metadata',
+                                 instance)
+                    metadatas.append(metadata)
+                except Exception:
+                    # failed policy check - not allowed to
+                    # read this metadata
+                    pass
+
+        # flatten list of lists
+        metadatas = itertools.chain.from_iterable(metadatas)
+        return [{'key': row['key'],
+                 'value': row['value'],
+                 'instance_id': row['instance_uuid']}
+                for row in metadatas]
 
     @wrap_check_policy
     @check_instance_lock
