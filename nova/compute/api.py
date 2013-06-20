@@ -2466,10 +2466,32 @@ class API(base.Base):
         rv = self.db.instance_metadata_get(context, instance['uuid'])
         return dict(rv.iteritems())
 
-    @wrap_check_policy
     def get_all_instance_metadata(self, context, search_filts):
         """Get all metadata."""
-        return self.db.instance_metadata_get_all(context, search_filts)
+        all_instance_metadata = self.db.instance_metadata_get_all(context,
+                                                                  search_filts)
+        search_opts = {'deleted': False}
+        instances = self.get_all(context, search_opts=search_opts)
+        my_name = self.get_all_instance_metadata.__name__
+        return_set = []
+        uuid_to_instance = dict(map(lambda(x): (x.get('uuid'), x), instances))
+
+        for metadata in all_instance_metadata:
+            uuid = metadata.get('instance_id')
+            instance = uuid_to_instance.get(uuid)
+
+            if not uuid or not instance:
+                continue
+
+            try:
+                check_policy(context, my_name, instance)
+                return_set.append(metadata)
+            except Exception:
+                # failed policy check: not
+                # allowed to read this metadata
+                pass
+
+        return return_set
 
     @wrap_check_policy
     @check_instance_lock
