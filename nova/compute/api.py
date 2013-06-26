@@ -2471,7 +2471,7 @@ class API(base.Base):
         all_instance_metadata = self.db.instance_metadata_get_all(context,
                                                                   search_filts)
         search_opts = {'deleted': False}
-        instances = self.get_all(context, search_opts=search_opts)
+        instances = self.get_all(context.elevated(), search_opts=search_opts)
         my_name = self.get_all_instance_metadata.__name__
         return_set = []
         uuid_to_instance = dict(map(lambda(x): (x.get('uuid'), x), instances))

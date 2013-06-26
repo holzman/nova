@@ -91,7 +91,6 @@ def enforce(context, action, target, do_raise=True):
            do_raise is False.
     """
     init()
-
     credentials = context.to_dict()
 
     # Add the exception arguments if asked to do a raise

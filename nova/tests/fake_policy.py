@@ -18,6 +18,7 @@
 policy_data = """
 {
     "admin_api": "role:admin",
+    "admin_or_owner":  "is_admin:True or project_id:%(project_id)s",
 
     "cells_scheduler_filter:TargetCellFilter": "is_admin:True",
 
@@ -33,7 +34,7 @@ policy_data = """
     "compute:update": "",
 
     "compute:get_instance_metadata": "",
-    "compute:get_all_instance_metadata": "",
+    "compute:get_all_instance_metadata": "rule:admin_or_owner",
     "compute:update_instance_metadata": "",
     "compute:delete_instance_metadata": "",
 
