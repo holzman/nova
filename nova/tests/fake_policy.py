@@ -28,7 +28,7 @@ policy_data = """
     "compute:create:attach_volume": "",
 
     "compute:get": "",
-    "compute:get_all": "",
+    "compute:get_all": "project_id:%(project_id)s",
     "compute:get_all_tenants": "",
 
     "compute:update": "",
