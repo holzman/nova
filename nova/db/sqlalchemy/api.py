@@ -4125,18 +4125,18 @@ def _instance_metadata_get_query(context, instance_uuid, session=None):
 def _instance_metadata_get_all_query(context, session=None,
                                      read_deleted='no', search_filts=[]):
 
-    or_query = None
+    and_query = None
     query = model_query(context, models.InstanceMetadata, session=session,
                         read_deleted=read_deleted)
 
-    # We want to incrementally build an OR query out of the search filters.
+    # We want to incrementally build an AND query out of the search filters.
     # So:
     # {'filter':
     #     [{'resource_id': 'i-0000001'}],
     #     [{'key': 'foo', 'value': 'bar'}]}
     # Should produce:
-    # AND ((instance_metadata.uuid IN ('1')) OR
-    # (instance_metadata.key IN ('foo')) OR
+    # AND ((instance_metadata.uuid IN ('1')) AND
+    # (instance_metadata.key IN ('foo')) AND
     # (instance_metadata.value IN ('bar')))
 
     def make_tuple(item):
@@ -4160,13 +4160,13 @@ def _instance_metadata_get_all_query(context, session=None,
             subq = models.InstanceMetadata.value.in_(value)
 
         if subq is not None:
-            if or_query is None:
-                or_query = subq
+            if and_query is None:
+                and_query = subq
             else:
-                or_query = or_(or_query, subq)
+                and_query = and_(and_query, subq)
 
-    if or_query is not None:
-        query = query.filter(or_query)
+    if and_query is not None:
+        query = query.filter(and_query)
 
     return query
 

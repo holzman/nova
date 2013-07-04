@@ -1831,9 +1831,12 @@ class InstanceMetadataTestCase(test.TestCase):
         self.assertEqual(expected, db.instance_metadata_get_all(self.ctxt, []))
         self.assertEqual(expected[:1], db.instance_metadata_get_all(self.ctxt,
                                                         [{'key': 'key0'}]))
+        self.assertEqual(expected[:1], db.instance_metadata_get_all(self.ctxt,
+                                                        [{'key': 'key0'},
+                                                         {'value': 'value0'}]))
         self.assertEqual(expected[1:2], db.instance_metadata_get_all(self.ctxt,
                                                         [{'value': 'value1'}]))
-        self.assertEqual(expected[:2], db.instance_metadata_get_all(self.ctxt,
+        self.assertEqual([], db.instance_metadata_get_all(self.ctxt,
                                                         [{'value': 'value1'},
                                                          {'key': 'key0'}]))
 

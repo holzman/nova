@@ -2640,7 +2640,14 @@ class CloudTestCase(test.TestCase):
                          'value': ['baz']},
                         {'name': 'value',
                          'value': ['wibble']}])['tagSet']
-        self.assertEqual(tags, [inst2_key_baz, inst1_key_bax])
+        self.assertEqual(tags, [])
+
+        tags = self.cloud.describe_tags(self.context,
+                filter=[{'name': 'key',
+                         'value': ['baz']},
+                        {'name': 'value',
+                         'value': ['quux']}])['tagSet']
+        self.assertEqual(tags, [inst2_key_baz])
 
         # And we should fail on supported resource types
         self.assertRaises(exception.EC2APIError,
