@@ -1680,6 +1680,8 @@ def instance_get_all_by_filters(context, filters, sort_key, sort_dir,
         'soft_deleted' - modify behavior of 'deleted' to either
                          include or exclude instances whose
                          vm_state is SOFT_DELETED.
+        'remove_metadata' - remove instance metadata that doesnt
+                            pass the specified metadata tag filters
     """
 
     sort_fn = {'desc': desc, 'asc': asc}

@@ -1182,7 +1182,7 @@ class CloudController(object):
             i['keyName'] = instance['key_name']
             i['tagSet'] = []
 
-            for k, v in instance['metadata'].iteritems():
+            for k, v in utils.instance_meta(instance).iteritems():
                 i['tagSet'].append({'key': k, 'value': v})
 
             if context.is_admin:
