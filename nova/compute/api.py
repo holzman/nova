@@ -23,7 +23,6 @@ networking and storage of VMs, and compute hosts on which they run)."""
 
 import base64
 import functools
-import itertools
 import re
 import string
 import uuid
@@ -2476,8 +2475,6 @@ class API(base.Base):
 
     def get_all_instance_metadata(self, context, search_filts):
         """Get all metadata."""
-#        instances = self.db.instance_metadata_get_all(context, search_filts)
-
 
         def make_tuple(item):
             if isinstance(item, dict):
@@ -2512,9 +2509,8 @@ class API(base.Base):
         sort_key = 'created_at'
         sort_dir = 'desc'
 
-
         instances = self._get_instances_by_filters(context, filters,
-                                                   sort_key='created_at', 
+                                                   sort_key='created_at',
                                                    sort_dir='desc')
 
         metadatas = []
@@ -2533,13 +2529,6 @@ class API(base.Base):
                     pass
 
         return metadatas
-        # flatten list of lists
-#        print metadatas
-#        metadatas = itertools.chain.from_iterable(metadatas)
-#        return [{'key': row['key'],
-#                 'value': row['value'],
-#                 'instance_id': row['instance_uuid']}
-#                for row in metadatas]
 
     @wrap_check_policy
     @check_instance_lock

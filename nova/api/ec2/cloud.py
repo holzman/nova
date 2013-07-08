@@ -1185,10 +1185,6 @@ class CloudController(object):
                     context, instance).iteritems():
                 i['tagSet'].append({'key': k, 'value': v})
 
-#            for k, v in instance['metadata'].iteritems():
-#                i['tagSet'].append({'key': k, 'value': v})
-                
-
             if context.is_admin:
                 i['keyName'] = '%s (%s, %s)' % (i['keyName'],
                     instance['project_id'],

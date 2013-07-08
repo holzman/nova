@@ -4136,52 +4136,6 @@ def _instance_metadata_get_query(context, instance_uuid, session=None):
                     filter_by(instance_uuid=instance_uuid)
 
 
-def _instance_metadata_get_all_query(context, session=None,
-                                     read_deleted='no', search_filts=[]):
-
-    def make_tuple(item):
-        if isinstance(item, dict):
-            item = item.values()
-        if not isinstance(item, (tuple, list, set)):
-            item = (item,)
-        return item
-
-    key = None
-    value = None
-    filters = {}
-
-    # This converts a search filter from DescribeTags to one
-    # that the methods underlying DescribeInstances will understand
-
-    for search_filt in search_filts:
-        if search_filt.get('resource_id'):
-            uuid = make_tuple(search_filt['resource_id'])
-            filters['uuid'] = uuid
-        elif search_filt.get('key'):
-            key = make_tuple(search_filt['key'])
-        elif search_filt.get('value'):
-            value = make_tuple(search_filt['value'])
-
-    if key and value:  # this is key=value
-        filters = {'filter': [{'name': 'tag:%s' % key[0], 'value': value}]}
-    elif key:
-        filters = {'filter': [{'name': 'tag-key', 'value': key}]}
-    elif value:
-        filters = {'filter': [{'name': 'tag-value', 'value': value}]}
-
-    sort_key = 'created_at'
-    sort_dir = 'desc'
-
-    instances = instance_get_all_by_filters(
-                    context, filters, sort_key,
-                    sort_dir, limit=None, marker=None, columns_to_join=None,
-                    session=None)
-
-    foo = []
-    print foo['bar']
-    return instances
-
-
 @require_context
 def instance_metadata_get(context, instance_uuid, session=None):
     rows = _instance_metadata_get_query(context, instance_uuid,
@@ -4192,14 +4146,6 @@ def instance_metadata_get(context, instance_uuid, session=None):
         result[row['key']] = row['value']
 
     return result
-
-
-@require_context
-def instance_metadata_get_all(context, search_filts=[], read_deleted="no"):
-    rows = _instance_metadata_get_all_query(context,
-                                       read_deleted=read_deleted,
-                                       search_filts=search_filts)
-    return rows
 
 
 @require_context
