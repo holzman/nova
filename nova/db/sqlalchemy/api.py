@@ -4177,6 +4177,8 @@ def _instance_metadata_get_all_query(context, session=None,
                     sort_dir, limit=None, marker=None, columns_to_join=None,
                     session=None)
 
+    foo = []
+    print foo['bar']
     return instances
 
 

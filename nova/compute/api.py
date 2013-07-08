@@ -2476,7 +2476,47 @@ class API(base.Base):
 
     def get_all_instance_metadata(self, context, search_filts):
         """Get all metadata."""
-        instances = self.db.instance_metadata_get_all(context, search_filts)
+#        instances = self.db.instance_metadata_get_all(context, search_filts)
+
+
+        def make_tuple(item):
+            if isinstance(item, dict):
+                item = item.values()
+            if not isinstance(item, (tuple, list, set)):
+                item = (item,)
+            return item
+
+        key = None
+        value = None
+        filters = {}
+
+        # This converts a search filter from DescribeTags to one
+        # that the methods underlying DescribeInstances will understand
+
+        for search_filt in search_filts:
+            if search_filt.get('resource_id'):
+                uuid = make_tuple(search_filt['resource_id'])
+                filters['uuid'] = uuid
+            elif search_filt.get('key'):
+                key = make_tuple(search_filt['key'])
+            elif search_filt.get('value'):
+                value = make_tuple(search_filt['value'])
+
+        if key and value:  # this is key=value
+            filters = {'filter': [{'name': 'tag:%s' % key[0], 'value': value}]}
+        elif key:
+            filters = {'filter': [{'name': 'tag-key', 'value': key}]}
+        elif value:
+            filters = {'filter': [{'name': 'tag-value', 'value': value}]}
+
+        sort_key = 'created_at'
+        sort_dir = 'desc'
+
+
+        instances = self._get_instances_by_filters(context, filters,
+                                                   sort_key='created_at', 
+                                                   sort_dir='desc')
+
         metadatas = []
         for instance in instances:
             metadata = instance.get('metadata')
@@ -2484,18 +2524,22 @@ class API(base.Base):
                 try:
                     check_policy(context, 'get_all_instance_metadata',
                                  instance)
-                    metadatas.append(metadata)
+                    for (k, v) in metadata.iteritems():
+                        metadatas.append({'key': k, 'value': v,
+                                          'instance_id': instance.get('uuid')})
                 except Exception:
                     # failed policy check - not allowed to
                     # read this metadata
                     pass
 
+        return metadatas
         # flatten list of lists
-        metadatas = itertools.chain.from_iterable(metadatas)
-        return [{'key': row['key'],
-                 'value': row['value'],
-                 'instance_id': row['instance_uuid']}
-                for row in metadatas]
+#        print metadatas
+#        metadatas = itertools.chain.from_iterable(metadatas)
+#        return [{'key': row['key'],
+#                 'value': row['value'],
+#                 'instance_id': row['instance_uuid']}
+#                for row in metadatas]
 
     @wrap_check_policy
     @check_instance_lock
