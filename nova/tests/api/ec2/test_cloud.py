@@ -1119,6 +1119,11 @@ class CloudTestCase(test.TestCase):
             sys_meta = flavors.save_flavor_info(
                 {}, flavors.get_flavor(1))
             values = values or {}
+            values.update({'reservation_id': 'a'})
+            utc = iso8601.iso8601.Utc()
+            values.update({'created_at': datetime.datetime(2012, 5, 1, 1, 1, 1,
+                                                       tzinfo=utc)})
+
             values.update({'image_ref': image_uuid, 'instance_type_id': 1,
                            'power_state': power_state_, 'vm_state': vm_state_,
                            'system_metadata': sys_meta})

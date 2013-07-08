@@ -2506,6 +2506,7 @@ class API(base.Base):
         elif value:
             filters = {'filter': [{'name': 'tag-value', 'value': value}]}
 
+        filters['remove_metadata'] = True
         sort_key = 'created_at'
         sort_dir = 'desc'
 

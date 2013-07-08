@@ -1610,11 +1610,7 @@ def _instances_fill_metadata(context, instances, manual_joins=None,
         inst = dict(inst.iteritems())
         inst['system_metadata'] = sys_meta[inst['uuid']]
         inst['metadata'] = meta[inst['uuid']]
-        if filters and filters.get('filter'):
-            if inst.get('metadata'):
-                filled_instances.append(inst)
-        else:
-            filled_instances.append(inst)
+        filled_instances.append(inst)
 
     return filled_instances
 
@@ -1752,6 +1748,10 @@ def instance_get_all_by_filters(context, filters, sort_key, sort_dir,
                                 filters, exact_match_filter_names)
 
     query_prefix = regex_filter(query_prefix, models.Instance, filters)
+    query_prefix = filter_instances_by_tag(query_prefix, models.Instance,
+                              models.InstanceMetadata,
+                              models.InstanceMetadata.instance_uuid,
+                              filters)
 
     # paginate query
     if marker is not None:
@@ -1768,8 +1768,13 @@ def instance_get_all_by_filters(context, filters, sort_key, sort_dir,
     return _instances_fill_metadata(context, query_prefix.all(), manual_joins,
                                     filters)
 
+def filter_metadata_by_tag(query, tag_model, filters):
+    return _tag_filter(query, tag_model, filters)
 
-def tag_filter(query, tag_model, filters):
+def filter_instances_by_tag(query, model, tag_model, tag_model_col, filters):
+    return _tag_filter(query, tag_model, filters, model=model, tag_model_col=tag_model_col)
+
+def _tag_filter(query, tag_model, filters, model=None, tag_model_col=None):
     """Applies tag filtering to a query.
 
     Returns the updated query.  This method alters filters to remove
@@ -1832,11 +1837,22 @@ def tag_filter(query, tag_model, filters):
             val = to_list(val)
             filter_name = filter_name[4:]
 
-            query = query.filter(tag_model.key == filter_name)
-            query = query.filter(tag_model.value.in_(val))
+            if tag_model_col:
+                subq = query.session.query(tag_model_col)
+                subq = subq.filter(tag_model.key == filter_name)
+                subq = subq.filter(tag_model.value.in_(val))
+                query = query.filter(model.uuid.in_(subq))
+            else:
+                query = query.filter(tag_model.key == filter_name)
+                query = query.filter(tag_model.value.in_(val))
 
     if or_query is not None:
-        query = query.filter(or_query)
+        if tag_model_col:
+            col_q = query.session.query(tag_model_col)
+            col_q = col_q.filter(or_query)
+            query = query.filter(model.uuid.in_(col_q))
+        else:
+            query = query.filter(or_query)
 
     return query
 
@@ -4124,8 +4140,8 @@ def _instance_metadata_get_multi(context, instance_uuids, session=None,
                         session=session).filter(
         models.InstanceMetadata.instance_uuid.in_(instance_uuids))
 
-    if filters:
-        query = tag_filter(query, models.InstanceMetadata,
+    if filters and 'remove_metadata' in filters:
+        query = filter_metadata_by_tag(query, models.InstanceMetadata,
                                   filters)
     return query
 
