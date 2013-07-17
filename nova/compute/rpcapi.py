@@ -250,9 +250,10 @@ class ComputeAPI(nova.openstack.common.rpc.proxy.RpcProxy):
 
     def change_instance_metadata(self, ctxt, instance, diff):
         instance_p = jsonutils.to_primitive(instance)
-        self.cast(ctxt, self.make_msg('change_instance_metadata',
-                  instance=instance_p, diff=diff),
-                  topic=_compute_topic(self.topic, ctxt, None, instance))
+        if instance.get('host'):
+            self.cast(ctxt, self.make_msg('change_instance_metadata',
+                                          instance=instance_p, diff=diff),
+                      _compute_topic(self.topic, ctxt, None, instance))
 
     def check_can_live_migrate_destination(self, ctxt, instance, destination,
                                            block_migration, disk_over_commit):

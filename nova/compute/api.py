@@ -2661,6 +2661,18 @@ class API(base.Base):
                           task_state=None)
     def update_instance_metadata(self, context, instance,
                                  metadata, delete=False):
+        return self._update_instance_metadata(context, instance,
+                                  metadata, delete)
+
+    def update_unlaunched_instance_metadata(self, context, instance,
+                                            metadata, delete=False):
+        """Updates or create instance metadata without checking
+        the state."""
+        return self._update_instance_metadata(context, instance,
+                                  metadata, delete)
+
+    def _update_instance_metadata(self, context, instance,
+                                 metadata, delete=False):
         """Updates or creates instance metadata.
 
         If delete is True, metadata items that are not specified in the

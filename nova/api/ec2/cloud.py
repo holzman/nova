@@ -1367,9 +1367,12 @@ class CloudController(object):
     def _add_client_token(self, context, client_token, instance_ids):
         """Add client token to reservation ID mapping."""
         if client_token:
-            self.create_tags(context, resource_id=instance_ids,
-                             tag=[{'key': 'EC2_client_token',
-                                   'value': client_token}])
+            metadata = {'EC2_client_token': client_token}
+            for ec2_id in instance_ids:
+                instance_uuid = ec2utils.ec2_inst_id_to_uuid(context, ec2_id)
+                instance = self.compute_api.get(context, instance_uuid)
+                self.compute_api.update_unlaunched_instance_metadata(
+                    context, instance, metadata)
 
     def _resv_id_from_token(self, context, client_token):
         """Get reservation ID from db."""
