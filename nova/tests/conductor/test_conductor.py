@@ -594,6 +594,12 @@ class _BaseTestCase(object):
         result = self.conductor.get_ec2_ids(self.context, inst)
         self.assertEqual(result, expected)
 
+    def test_compute_delete(self):
+        self.mox.StubOutWithMock(self.conductor_manager.compute_api, 'delete')
+        self.conductor_manager.compute_api.delete(self.context, 'instance')
+        self.mox.ReplayAll()
+        self.conductor.compute_delete(self.context, 'instance')
+
     def test_compute_confirm_resize(self):
         self.mox.StubOutWithMock(self.conductor_manager.compute_api,
                                  'confirm_resize')

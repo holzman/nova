@@ -4437,8 +4437,8 @@ class ComputeManager(manager.SchedulerDependentManager):
         loop, one database record at a time, checking if the hypervisor has the
         same power state as is in the database.
         """
-        db_instances = instance_obj.InstanceList.get_by_host(context,
-                                                             self.host)
+        db_instances = instance_obj.InstanceList.get_by_host(
+            context, self.host, expected_attrs=['system_metadata', 'metadata'])
 
         num_vm_instances = self.driver.get_num_instances()
         num_db_instances = len(db_instances)
@@ -4530,7 +4530,12 @@ class ComputeManager(manager.SchedulerDependentManager):
                     # Note(maoy): here we call the API instead of
                     # brutally updating the vm_state in the database
                     # to allow all the hooks and checks to be performed.
-                    self.compute_api.stop(context, db_instance)
+
+                    # terminate instances if needed
+                    if db_instance.get('shutdown_terminate'):
+                        self.compute_api.delete(context, db_instance)
+                    else:
+                        self.compute_api.stop(context, db_instance)
                 except Exception:
                     # Note(maoy): there is no need to propagate the error
                     # because the same power_state will be retrieved next

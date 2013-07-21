@@ -75,7 +75,7 @@ class ConductorManager(manager.Manager):
     namespace.  See the ComputeTaskManager class for details.
     """
 
-    RPC_API_VERSION = '1.55'
+    RPC_API_VERSION = '1.56'
 
     def __init__(self, *args, **kwargs):
         super(ConductorManager, self).__init__(service_name='conductor',
@@ -529,6 +529,12 @@ class ConductorManager(manager.Manager):
             instance = instance_obj.Instance._from_db_object(
                                 context, instance_obj.Instance(), instance)
         self.compute_api.stop(context, instance, do_cast)
+
+    def compute_delete(self, context, instance):
+        if isinstance(instance, dict):
+            instance = instance_obj.Instance._from_db_object(
+                                context, instance_obj.Instance(), instance)
+        self.compute_api.delete(context, instance)
 
     def compute_confirm_resize(self, context, instance, migration_ref):
         if isinstance(instance, nova_object.NovaObject):

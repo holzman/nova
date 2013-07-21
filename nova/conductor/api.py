@@ -334,6 +334,9 @@ class LocalAPI(object):
     def get_ec2_ids(self, context, instance):
         return self._manager.get_ec2_ids(context, instance)
 
+    def compute_delete(self, context, instance):
+        return self._manager.compute_delete(context, instance)
+
     def compute_confirm_resize(self, context, instance, migration_ref):
         return self._manager.compute_confirm_resize(context, instance,
                                                     migration_ref)

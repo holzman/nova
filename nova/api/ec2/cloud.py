@@ -1344,6 +1344,11 @@ class CloudController(object):
         if image_state != 'available':
             raise exception.EC2APIError(_('Image must be available'))
 
+        shutdown_terminate = None
+        iisb = kwargs.get('instance_initiated_shutdown_behavior')
+        if iisb == 'terminate':
+            shutdown_terminate = True
+
         (instances, resv_id) = self.compute_api.create(context,
             instance_type=flavors.get_flavor_by_name(
                 kwargs.get('instance_type', None)),
@@ -1357,7 +1362,8 @@ class CloudController(object):
             security_group=kwargs.get('security_group'),
             availability_zone=kwargs.get('placement', {}).get(
                                   'availability_zone'),
-            block_device_mapping=kwargs.get('block_device_mapping', {}))
+            block_device_mapping=kwargs.get('block_device_mapping', {}),
+            shutdown_terminate=shutdown_terminate)
 
         instances = self._format_run_instances(context, resv_id)
         if instances:

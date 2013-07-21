@@ -106,6 +106,7 @@ class ConductorAPI(nova.openstack.common.rpc.proxy.RpcProxy):
     1.53 - Added compute_reboot
     1.54 - Added 'update_cells' argument to bw_usage_update
     1.55 - Pass instance objects for compute_stop
+    1.56 - Added compute_delete
     """
 
     BASE_RPC_API_VERSION = '1.0'
@@ -477,6 +478,10 @@ class ConductorAPI(nova.openstack.common.rpc.proxy.RpcProxy):
         instance_p = jsonutils.to_primitive(instance)
         msg = self.make_msg('get_ec2_ids', instance=instance_p)
         return self.call(context, msg, version='1.42')
+
+    def compute_delete(self, context, instance):
+        msg = self.make_msg('compute_delete', instance=instance)
+        return self.call(context, msg, version='1.56')
 
     def compute_confirm_resize(self, context, instance, migration_ref):
         migration_p = jsonutils.to_primitive(migration_ref)
