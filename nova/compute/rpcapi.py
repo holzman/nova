@@ -192,6 +192,8 @@ class ComputeAPI(nova.openstack.common.rpc.proxy.RpcProxy):
                new-world instance objects
         2.34 - Made pause_instance() and unpause_instance() take new-world
                instance objects
+        2.37 - Added periodic_task_on_demand()
+
     '''
 
     #
@@ -651,6 +653,11 @@ class ComputeAPI(nova.openstack.common.rpc.proxy.RpcProxy):
                 instance=instance),
                 topic=_compute_topic(self.topic, ctxt, None, instance),
                 version='2.29')
+
+    def periodic_task_on_demand(self, ctxt, task_name):
+        self.fanout_cast(ctxt, self.make_msg('periodic_task_on_demand',
+                                             task_name=task_name),
+                         version='2.37')
 
     def stop_instance(self, ctxt, instance, do_cast=True):
         rpc_method = self.cast if do_cast else self.call

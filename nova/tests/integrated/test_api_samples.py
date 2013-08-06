@@ -361,6 +361,7 @@ class ApiSampleTestBase(integrated_helpers._IntegratedTestBase):
             'glance_host': self._get_glance_host(),
             'compute_host': self.compute.host,
             'text': text,
+            'task_name': text,
             'int': '[0-9]+',
         }
 
@@ -3325,6 +3326,21 @@ class ExtendedAvailabilityZoneJsonTests(ServersSampleBase):
 class ExtendedAvailabilityZoneXmlTests(ExtendedAvailabilityZoneJsonTests):
     ctype = 'xml'
 
+class PeriodicTaskOnDemandJsonTest(ServersSampleBase):
+    extension_name = ("nova.api.openstack.compute.contrib"
+                      ".periodic_task_on_demand.Periodic_task_on_demand")
+
+    def test_server_periodic_task_on_demand(self):
+        uuid = self._post_server()
+        req_subs = {'taskname': 'task_foo'}
+
+        response = self._do_post('servers/%s/action' % uuid,
+                                 'server-periodic-task-req', req_subs)
+        subs = self._get_regexes()
+        self._verify_response('server-periodic-task-resp', subs, response, 200)
+
+class PeriodicTaskOnDemandXmlTest(PeriodicTaskOnDemandJsonTest):
+    ctype = 'xml'
 
 class EvacuateJsonTest(ServersSampleBase):
 

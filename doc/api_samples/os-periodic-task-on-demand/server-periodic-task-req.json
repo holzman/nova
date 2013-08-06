@@ -1,0 +1,5 @@
+{
+    "periodicTaskOnDemand" : {
+        "taskName" : "task_foo"
+    }
+}

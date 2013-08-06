@@ -153,6 +153,28 @@ class _PeriodicTasksMeta(type):
 class PeriodicTasks(object):
     __metaclass__ = _PeriodicTasksMeta
 
+    def _run_task(self, context, task, task_name, raise_on_error):
+        full_task_name = '.'.join([self.__class__.__name__, task_name])
+        LOG.debug(_("Running periodic task %(full_task_name)s"), locals())
+        self._periodic_last_run[task_name] = timeutils.utcnow()
+
+        try:
+            task(self, context)
+        except Exception as e:
+            if raise_on_error:
+                raise
+            LOG.exception(_("Error during %(full_task_name)s: %(e)s"),
+                          locals())
+
+    def periodic_task_on_demand(self, context, desired_task_name, raise_on_error=False):
+        """Run a periodic task Right Now."""
+
+        for task_name, task in self._periodic_tasks:
+            if desired_task_name == task_name:
+                self._run_task(context, task, task_name, raise_on_error)
+                break
+
+
     def run_periodic_tasks(self, context, raise_on_error=False):
         """Tasks to be run at a periodic interval."""
         idle_for = DEFAULT_INTERVAL
@@ -173,16 +195,8 @@ class PeriodicTasks(object):
             if spacing is not None:
                 idle_for = min(idle_for, spacing)
 
-            LOG.debug(_("Running periodic task %(full_task_name)s"), locals())
             self._periodic_last_run[task_name] = timeutils.utcnow()
-
-            try:
-                task(self, context)
-            except Exception as e:
-                if raise_on_error:
-                    raise
-                LOG.exception(_("Error during %(full_task_name)s: %(e)s"),
-                              locals())
+            self._run_task(context, task, task_name, raise_on_error)
             time.sleep(0)
 
         return idle_for

@@ -1491,6 +1491,17 @@ class API(base.Base):
         #                 availability_zone isn't used by run_instance.
         self.compute_rpcapi.start_instance(context, instance)
 
+    def periodic_task_on_demand(self, context, task_name):
+        target = {
+            'project_id': context.project_id,
+            'user_id': context.user_id,
+        }
+
+        check_policy(context, "periodic_task_on_demand", target)
+
+        LOG.debug(_("Trying to start %s on demand") % task_name)
+        self.compute_rpcapi.periodic_task_on_demand(context, task_name)
+
     #NOTE(bcwaldon): no policy check here since it should be rolled in to
     # search_opts in get_all
     def get_active_by_window(self, context, begin, end=None, project_id=None):

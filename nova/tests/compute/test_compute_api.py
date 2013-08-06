@@ -195,6 +195,14 @@ class _ComputeAPIUnitTestMixIn(object):
         self.assertEqual(task_states.POWERING_ON,
                          instance.task_state)
 
+    def test_periodic_task_on_demand(self):
+        rpcapi = self.compute_api.compute_rpcapi
+        ctxt = self.context.elevated()
+        self.mox.StubOutWithMock(rpcapi, 'periodic_task_on_demand')
+        rpcapi.periodic_task_on_demand(ctxt, 'task_foo')
+        self.mox.ReplayAll()
+        self.compute_api.periodic_task_on_demand(ctxt, 'task_foo')
+
     def test_start_invalid_state(self):
         instance = self._create_instance_obj()
         self.assertEqual(instance.vm_state, vm_states.ACTIVE)

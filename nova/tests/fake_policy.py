@@ -98,6 +98,7 @@ policy_data = """
     "compute:force_delete": "",
     "compute:restore": "",
 
+    "compute:periodic_task_on_demand": "is_admin:True",
 
     "compute_extension:accounts": "",
     "compute_extension:admin_actions:pause": "",
@@ -125,6 +126,8 @@ policy_data = """
     "compute_extension:v3:os-admin-actions:reset_state": "",
     "compute_extension:v3:os-admin-actions:migrate": "",
     "compute_extension:v3:os-admin-password": "",
+    "compute_extension:periodic-task-on-demand": "is_admin:True",
+    "compute_extension:v3:os-periodic-task-on-demand": "is_admin:True",
     "compute_extension:aggregates": "",
     "compute_extension:v3:os-aggregates": "",
     "compute_extension:agents": "",

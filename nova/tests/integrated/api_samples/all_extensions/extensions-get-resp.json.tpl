@@ -449,6 +449,14 @@
             "updated": "%(timestamp)s"
         },
         {
+	    "alias": "os-periodic-task-on-demand",
+            "description": "%(text)s",
+            "links": [],
+            "name": "PeriodicTaskOnDemand",
+            "namespace": "http://docs.openstack.org/compute/ext/periodic_task_on_demand/api/v2",
+            "updated": "%(timestamp)s"
+        },
+        {
             "alias": "os-quota-class-sets",
             "description": "%(text)s",
             "links": [],

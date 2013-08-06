@@ -168,6 +168,9 @@
   <extension alias="os-networks-associate" updated="%(timestamp)s" namespace="http://docs.openstack.org/compute/ext/networks_associate/api/v2" name="NetworkAssociationSupport">
     <description>%(text)s</description>
   </extension>
+  <extension alias="os-periodic-task-on-demand" updated="%(timestamp)s" namespace="http://docs.openstack.org/compute/ext/periodic_task_on_demand/api/v2" name="PeriodicTaskOnDemand">
+    <description>%(text)s</description>
+  </extension>
   <extension alias="os-quota-class-sets" updated="%(timestamp)s" namespace="http://docs.openstack.org/compute/ext/quota-classes-sets/api/v1.1" name="QuotaClasses">
     <description>%(text)s</description>
   </extension>

@@ -457,6 +457,14 @@
             "updated": "2012-11-19T00:00:00+00:00"
         },
         {
+            "alias": "os-periodic-task-on-demand",
+            "description": "Enables execution of periodic tasks.",
+            "links": [],
+            "name": "PeriodicTaskOnDemand",
+            "namespace": "http://docs.openstack.org/compute/ext/periodic_task_on_demand/api/v2",
+            "updated": "2013-08-05T00:00:00+00:00"
+        },
+        {
             "alias": "os-quota-class-sets",
             "description": "Quota classes management support.",
             "links": [],
@@ -471,14 +479,6 @@
             "name": "Quotas",
             "namespace": "http://docs.openstack.org/compute/ext/quotas-sets/api/v1.1",
             "updated": "2011-08-08T00:00:00+00:00"
-        },
-        {
-            "alias": "os-user-quotas",
-            "description": "Project user quota support.",
-            "links": [],
-            "name": "UserQuotas",
-            "namespace": "http://docs.openstack.org/compute/ext/user_quotas/api/v1.1",
-            "updated": "2013-07-18T00:00:00+00:00"
         },
         {
             "alias": "os-rescue",
@@ -583,6 +583,14 @@
             "name": "UserData",
             "namespace": "http://docs.openstack.org/compute/ext/userdata/api/v1.1",
             "updated": "2012-08-07T00:00:00+00:00"
+        },
+        {
+            "alias": "os-user-quotas",
+            "description": "Project user quota support.",
+            "links": [],
+            "name": "UserQuotas",
+            "namespace": "http://docs.openstack.org/compute/ext/user_quotas/api/v1.1",
+            "updated": "2013-07-18T00:00:00+00:00"
         },
         {
             "alias": "os-virtual-interfaces",
