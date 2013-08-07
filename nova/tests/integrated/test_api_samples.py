@@ -3326,6 +3326,7 @@ class ExtendedAvailabilityZoneJsonTests(ServersSampleBase):
 class ExtendedAvailabilityZoneXmlTests(ExtendedAvailabilityZoneJsonTests):
     ctype = 'xml'
 
+
 class PeriodicTaskOnDemandJsonTest(ServersSampleBase):
     extension_name = ("nova.api.openstack.compute.contrib"
                       ".periodic_task_on_demand.Periodic_task_on_demand")
@@ -3339,8 +3340,10 @@ class PeriodicTaskOnDemandJsonTest(ServersSampleBase):
         subs = self._get_regexes()
         self._verify_response('server-periodic-task-resp', subs, response, 200)
 
+
 class PeriodicTaskOnDemandXmlTest(PeriodicTaskOnDemandJsonTest):
     ctype = 'xml'
+
 
 class EvacuateJsonTest(ServersSampleBase):
 

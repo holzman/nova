@@ -13,8 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import uuid
-
 from nova.api.openstack.compute.plugins.v3 import periodic_task_on_demand
 from nova.compute import api as compute_api
 from nova.compute import rpcapi as compute_rpcapi
@@ -28,13 +26,13 @@ class PeriodicTaskOnDemandTest(test.NoDBTestCase):
 
     def setUp(self):
         super(PeriodicTaskOnDemandTest, self).setUp()
-        self.controller = periodic_task_on_demand.PeriodicTaskOnDemandController
-        self.UUID = uuid.uuid4()
+        self.controller = \
+            periodic_task_on_demand.PeriodicTaskOnDemandController
+
         self.compute_rpcapi = compute_rpcapi.ComputeAPI
         self.compute_api = compute_api.API
-
-        self.req = fakes.HTTPRequest.blank('/v3/servers/%s/action'
-                                           % self.UUID)
+        self.req = fakes.HTTPRequest.blank('/v3/os-periodic-task-on-demand',
+                                           use_admin_context=True)
         self.req.method = 'POST'
         self.req.body = jsonutils.dumps(
             {'periodicTaskOnDemand': {'taskName': 'task_foo'}})
@@ -49,12 +47,11 @@ class PeriodicTaskOnDemandTest(test.NoDBTestCase):
         self.flags(
             osapi_compute_extension=[
                 'nova.api.openstack.compute.contrib.select_extensions'],
-            osapi_compute_ext_list=['Periodic_task_on_demand'])
+            osapi_compute_ext_list=['PeriodicTaskOnDemand'])
 
     def test_periodic_task_on_demand(self):
-        app = fakes.wsgi_app_v3(init_only=('servers', 'os-periodic-task-on-demand'),
+        app = fakes.wsgi_app_v3(init_only=('os-periodic-task-on-demand'),
                                 fake_auth_context=self.context)
-
         self.mox.StubOutWithMock(self.compute_rpcapi,
                                  'periodic_task_on_demand')
         self.compute_rpcapi.periodic_task_on_demand(self.context, 'task_foo')

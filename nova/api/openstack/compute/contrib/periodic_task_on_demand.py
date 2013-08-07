@@ -12,15 +12,12 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-
-
-
 from webob import exc
 
 from nova.api.openstack import extensions
 from nova.api.openstack import wsgi
-from nova import compute
 from nova.api.openstack import xmlutil
+from nova import compute
 from nova.openstack.common.gettextutils import _
 from nova.openstack.common import log as logging
 
@@ -29,6 +26,7 @@ ALIAS = "os-periodic-task-on-demand"
 authorize = extensions.extension_authorizer(
     'compute', 'periodic-task-on-demand')
 
+
 class PeriodicTaskTemplate(xmlutil.TemplateBuilder):
     def construct(self):
         root = xmlutil.TemplateElement('periodicTaskOnDemand',
@@ -36,14 +34,10 @@ class PeriodicTaskTemplate(xmlutil.TemplateBuilder):
         root.set('taskName')
         return xmlutil.MasterTemplate(root, 1)
 
+
 class PeriodicTaskOnDemandController(object):
     def __init__(self, *args, **kwargs):
         self.compute_api = compute.API()
-
-    # @wsgi.serializers(xml=PeriodicTaskTemplate)
-    # def index(self, req):
-    #     print 'yay index'
-    #     return {'taskName': 'dingus'}
 
     @wsgi.serializers(xml=PeriodicTaskTemplate)
     def create(self, req, body):
@@ -67,6 +61,7 @@ class PeriodicTaskOnDemandController(object):
         self.compute_api.periodic_task_on_demand(context, task_name)
         return body
 
+
 class Periodic_task_on_demand(extensions.ExtensionDescriptor):
     """Enables execution of periodic tasks."""
 
@@ -76,18 +71,9 @@ class Periodic_task_on_demand(extensions.ExtensionDescriptor):
                  "periodic_task_on_demand/api/v2")
     updated = "2013-08-05T00:00:00+00:00"
 
-    def __init__(self, ext_mgr):
-        ext_mgr.register(self)
-
     def get_resources(self):
         resources = []
-        resource = extensions.ResourceExtension(ALIAS,
-                                                PeriodicTaskOnDemandController())
-
+        resource = extensions.ResourceExtension(
+            ALIAS, PeriodicTaskOnDemandController())
         resources.append(resource)
         return resources
-
-#    def get_controller_extensions(self):
-#        controller = PeriodicTaskOnDemandController()
-#        extension = extensions.ControllerExtension(self, 'servers', controller)
-#        return [extension]

@@ -13,8 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import uuid
-
 from nova.api.openstack.compute.contrib import periodic_task_on_demand
 from nova.compute import api as compute_api
 from nova.compute import rpcapi as compute_rpcapi
@@ -28,16 +26,15 @@ class PeriodicTaskOnDemandTest(test.NoDBTestCase):
 
     def setUp(self):
         super(PeriodicTaskOnDemandTest, self).setUp()
-        self.controller = periodic_task_on_demand.PeriodicTaskOnDemandController
-        self.UUID = uuid.uuid4()
+        self.controller = \
+            periodic_task_on_demand.PeriodicTaskOnDemandController
+
         self.compute_rpcapi = compute_rpcapi.ComputeAPI
         self.compute_api = compute_api.API
 
-#        self.req = fakes.HTTPRequest.blank('/v2/fake/servers/%s/action'
-#                                           % self.UUID)
-
-        self.req = fakes.HTTPRequest.blank('/v2/fake/os-periodic-task-on-demand',
-                                      use_admin_context=True)
+        self.req = fakes.HTTPRequest.blank(
+            '/v2/fake/os-periodic-task-on-demand',
+            use_admin_context=True)
 
         self.req.method = 'POST'
         self.req.body = jsonutils.dumps(
