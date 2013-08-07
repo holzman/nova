@@ -33,8 +33,12 @@ class PeriodicTaskOnDemandTest(test.NoDBTestCase):
         self.compute_rpcapi = compute_rpcapi.ComputeAPI
         self.compute_api = compute_api.API
 
-        self.req = fakes.HTTPRequest.blank('/v2/fake/servers/%s/action'
-                                           % self.UUID)
+#        self.req = fakes.HTTPRequest.blank('/v2/fake/servers/%s/action'
+#                                           % self.UUID)
+
+        self.req = fakes.HTTPRequest.blank('/v2/fake/os-periodic-task-on-demand',
+                                      use_admin_context=True)
+
         self.req.method = 'POST'
         self.req.body = jsonutils.dumps(
             {'periodicTaskOnDemand': {'taskName': 'task_foo'}})
@@ -49,6 +53,17 @@ class PeriodicTaskOnDemandTest(test.NoDBTestCase):
             osapi_compute_extension=[
                 'nova.api.openstack.compute.contrib.select_extensions'],
             osapi_compute_ext_list=['Periodic_task_on_demand'])
+
+    def test_foo(self):
+        app = fakes.wsgi_app(fake_auth_context=self.context)
+        req = fakes.HTTPRequest.blank('/v2/fake/os-periodic-task-on-demand',
+                                      use_admin_context=True)
+        req.method = 'GET'
+        req.content_type = 'application/json'
+
+        res = req.get_response(app)
+        self.assertEqual(res.status_int, 200)
+#        self.assertEqual(1, 2)
 
     def test_periodic_task_on_demand(self):
         app = fakes.wsgi_app(fake_auth_context=self.context)
