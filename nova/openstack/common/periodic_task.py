@@ -166,11 +166,11 @@ class PeriodicTasks(object):
             LOG.exception(_("Error during %(full_task_name)s: %(e)s"),
                           locals())
 
-    def periodic_task_on_demand(self, context, desired_task_name, raise_on_error=False):
+    def periodic_task_on_demand(self, context, task_name, raise_on_error=False):
         """Run a periodic task Right Now."""
 
-        for task_name, task in self._periodic_tasks:
-            if desired_task_name == task_name:
+        for periodic_task_name, task in self._periodic_tasks:
+            if task_name == periodic_task_name:
                 self._run_task(context, task, task_name, raise_on_error)
                 break
 
