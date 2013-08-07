@@ -54,17 +54,6 @@ class PeriodicTaskOnDemandTest(test.NoDBTestCase):
                 'nova.api.openstack.compute.contrib.select_extensions'],
             osapi_compute_ext_list=['Periodic_task_on_demand'])
 
-    def test_foo(self):
-        app = fakes.wsgi_app(fake_auth_context=self.context)
-        req = fakes.HTTPRequest.blank('/v2/fake/os-periodic-task-on-demand',
-                                      use_admin_context=True)
-        req.method = 'GET'
-        req.content_type = 'application/json'
-
-        res = req.get_response(app)
-        self.assertEqual(res.status_int, 200)
-#        self.assertEqual(1, 2)
-
     def test_periodic_task_on_demand(self):
         app = fakes.wsgi_app(fake_auth_context=self.context)
 
