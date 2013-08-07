@@ -1,1 +1,1 @@
-<taskName>%(task_name)s</taskName>
+<periodicTaskOnDemand taskName="%(task_name)s"/>

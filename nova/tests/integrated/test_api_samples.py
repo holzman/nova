@@ -3332,9 +3332,9 @@ class PeriodicTaskOnDemandJsonTest(ServersSampleBase):
 
     def test_server_periodic_task_on_demand(self):
         uuid = self._post_server()
-        req_subs = {'taskname': 'task_foo'}
+        req_subs = {'task_name': 'task_foo'}
 
-        response = self._do_post('servers/%s/action' % uuid,
+        response = self._do_post('os-periodic-task-on-demand',
                                  'server-periodic-task-req', req_subs)
         subs = self._get_regexes()
         self._verify_response('server-periodic-task-resp', subs, response, 200)

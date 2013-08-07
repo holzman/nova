@@ -31,8 +31,10 @@ authorize = extensions.extension_authorizer(
 
 class PeriodicTaskTemplate(xmlutil.TemplateBuilder):
     def construct(self):
-        return xmlutil.MasterTemplate(xmlutil.make_flat_dict('taskName'), 1)
-
+        root = xmlutil.TemplateElement('periodicTaskOnDemand',
+                                       selector='periodicTaskOnDemand')
+        root.set('taskName')
+        return xmlutil.MasterTemplate(root, 1)
 
 class PeriodicTaskOnDemandController(object):
     def __init__(self, *args, **kwargs):
@@ -45,7 +47,6 @@ class PeriodicTaskOnDemandController(object):
 
     @wsgi.serializers(xml=PeriodicTaskTemplate)
     def create(self, req, body):
-        print 'fingus'
         context = req.environ['nova.context']
         authorize(context)
 
@@ -64,7 +65,7 @@ class PeriodicTaskOnDemandController(object):
             msg = _("Malformed periodicTaskOnDemand entity")
             raise exc.HTTPBadRequest(explanation=msg)
         self.compute_api.periodic_task_on_demand(context, task_name)
-        return {'taskName': task_name}
+        return body
 
 class Periodic_task_on_demand(extensions.ExtensionDescriptor):
     """Enables execution of periodic tasks."""

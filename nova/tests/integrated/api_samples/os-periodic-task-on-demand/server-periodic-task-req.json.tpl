@@ -1,5 +1,5 @@
 {
     "periodicTaskOnDemand" : {
-        "taskName" : "%(taskname)s"
+        "taskName" : "%(task_name)s"
     }
 }
