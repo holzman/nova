@@ -160,6 +160,8 @@ class _ComputeAPIUnitTestMixIn(object):
             quota.QUOTAS.limit_check(self.context, metadata_items=mox.IsA(int))
             quota.QUOTAS.reserve(self.context, instances=40,
                                  cores=mox.IsA(int),
+                                 expire=mox.IgnoreArg(), project_id=mox.IgnoreArg(),
+                                 user_id=mox.IgnoreArg(),
                                  ram=mox.IsA(int)).AndRaise(quota_exception)
 
         self.mox.ReplayAll()
@@ -1909,7 +1911,7 @@ class _ComputeAPIUnitTestMixIn(object):
         self.assertEqual(vm_mode.XEN, instance.vm_mode)
 
     @mock.patch('nova.quota.QUOTAS.commit')
-    @mock.patch('nova.quota.QUOTAS.reserve')
+    @mock.patch('nova.objects.Quotas.reserve')
     @mock.patch('nova.objects.Instance.save')
     @mock.patch('nova.objects.InstanceAction.action_start')
     def test_restore(self, action_start, instance_save, quota_reserve,

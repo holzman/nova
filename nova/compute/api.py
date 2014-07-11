@@ -330,7 +330,8 @@ class API(base.Base):
 
         # Check the quota
         try:
-            reservations = QUOTAS.reserve(context, instances=max_count,
+            Quotas = quotas_obj.Quotas(context)
+            reservations = Quotas.reserve(context, instances=max_count,
                                           cores=req_cores, ram=req_ram)
         except exception.OverQuota as exc:
             # OK, we exceeded quota; let's figure out why...
@@ -1457,6 +1458,7 @@ class API(base.Base):
                                                      instance,
                                                      original_task_state,
                                                      project_id, user_id)
+            quotas = quotas_obj.Quotas.from_reservations(context, reservations, instance)
 
             if self.cell_type == 'api':
                 # NOTE(comstud): If we're in the API cell, we need to
@@ -1466,10 +1468,7 @@ class API(base.Base):
                 # way to deal with quotas with cells.
                 cb(context, instance, bdms, reservations=None)
                 if reservations:
-                    QUOTAS.commit(context,
-                                  reservations,
-                                  project_id=project_id,
-                                  user_id=user_id)
+                    quotas.commit()
                 return
 
             if not host:
@@ -1483,10 +1482,7 @@ class API(base.Base):
                             "%s.end" % delete_type,
                             system_metadata=instance.system_metadata)
                     if reservations:
-                        QUOTAS.commit(context,
-                                      reservations,
-                                      project_id=project_id,
-                                      user_id=user_id)
+                        quotas.commit()
                     return
                 except exception.ObjectActionError:
                     instance.refresh()
@@ -1506,9 +1502,7 @@ class API(base.Base):
                         LOG.info(_('Instance is already in deleting state, '
                                    'ignoring this request'), instance=instance)
                         if reservations:
-                            QUOTAS.rollback(context, reservations,
-                                            project_id=project_id,
-                                            user_id=user_id)
+                            quotas.rollback()
                         return
 
                     self._record_action_start(context, instance,
@@ -1522,25 +1516,16 @@ class API(base.Base):
                 # If compute node isn't up, just delete from DB
                 self._local_delete(context, instance, bdms, delete_type, cb)
                 if reservations:
-                    QUOTAS.commit(context,
-                                  reservations,
-                                  project_id=project_id,
-                                  user_id=user_id)
+                    quotas.commit()
                     reservations = None
         except exception.InstanceNotFound:
             # NOTE(comstud): Race condition. Instance already gone.
             if reservations:
-                QUOTAS.rollback(context,
-                                reservations,
-                                project_id=project_id,
-                                user_id=user_id)
+                quotas.rollback()
         except Exception:
             with excutils.save_and_reraise_exception():
                 if reservations:
-                    QUOTAS.rollback(context,
-                                    reservations,
-                                    project_id=project_id,
-                                    user_id=user_id)
+                    quotas.rollback()
 
     def _confirm_resize_on_deleting(self, context, instance):
         # If in the middle of a resize, use confirm_resize to
@@ -1621,13 +1606,14 @@ class API(base.Base):
                     instance_memory_mb = (old_inst_type['memory_mb'] + vram_mb)
                     LOG.debug("going to delete a resizing instance")
 
-        reservations = QUOTAS.reserve(context,
-                                      project_id=project_id,
-                                      user_id=user_id,
-                                      instances=-1,
-                                      cores=-instance_vcpus,
-                                      ram=-instance_memory_mb)
-        return reservations
+        quotas = quotas_obj.Quotas(context)
+        quotas.reserve(context,
+                       project_id=project_id,
+                       user_id=user_id,
+                       instances=-1,
+                       cores=-instance_vcpus,
+                       ram=-instance_memory_mb)
+        return quotas.reservations
 
     def _local_delete(self, context, instance, bdms, delete_type, cb):
         LOG.warning(_("instance's host %s is down, deleting from "
