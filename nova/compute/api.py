@@ -330,8 +330,9 @@ class API(base.Base):
 
         # Check the quota
         try:
-            reservations = QUOTAS.reserve(context, instances=max_count,
-                                          cores=req_cores, ram=req_ram)
+            quotas = objects.Quotas(context)
+            quotas.reserve(context, instances=max_count,
+                           cores=req_cores, ram=req_ram)
         except exception.OverQuota as exc:
             # OK, we exceeded quota; let's figure out why...
             quotas = exc.kwargs['quotas']
@@ -387,7 +388,7 @@ class API(base.Base):
                                              used=used, allowed=total_allowed,
                                              resource=resource)
 
-        return max_count, reservations
+        return max_count, quotas
 
     def _check_metadata_properties_quota(self, context, metadata=None):
         """Enforce quota limits on metadata properties."""
@@ -805,7 +806,7 @@ class API(base.Base):
             max_count, base_options, boot_meta, security_groups,
             block_device_mapping):
         # Reserve quotas
-        num_instances, quota_reservations = self._check_num_instances_quota(
+        num_instances, quotas = self._check_num_instances_quota(
                 context, instance_type, min_count, max_count)
         LOG.debug("Going to run %s instances..." % num_instances)
         instances = []
@@ -835,10 +836,10 @@ class API(base.Base):
                         except exception.ObjectActionError:
                             pass
                 finally:
-                    QUOTAS.rollback(context, quota_reservations)
+                    quotas.rollback()
 
         # Commit the reservations
-        QUOTAS.commit(context, quota_reservations)
+        quotas.commit()
         return instances
 
     def _get_bdm_image_metadata(self, context, block_device_mapping,
@@ -1453,10 +1454,11 @@ class API(base.Base):
             # NOTE(comstud): If we delete the instance locally, we'll
             # commit the reservations here.  Otherwise, the manager side
             # will commit or rollback the reservations based on success.
-            reservations = self._create_reservations(context,
-                                                     instance,
-                                                     original_task_state,
-                                                     project_id, user_id)
+            quotas = self._create_reservations(context,
+                                               instance,
+                                               original_task_state,
+                                               project_id, user_id)
+            reservations = quotas.reservations
 
             if self.cell_type == 'api':
                 # NOTE(comstud): If we're in the API cell, we need to
@@ -1466,10 +1468,7 @@ class API(base.Base):
                 # way to deal with quotas with cells.
                 cb(context, instance, bdms, reservations=None)
                 if reservations:
-                    QUOTAS.commit(context,
-                                  reservations,
-                                  project_id=project_id,
-                                  user_id=user_id)
+                    quotas.commit()
                 return
 
             if not host:
@@ -1483,10 +1482,7 @@ class API(base.Base):
                             "%s.end" % delete_type,
                             system_metadata=instance.system_metadata)
                     if reservations:
-                        QUOTAS.commit(context,
-                                      reservations,
-                                      project_id=project_id,
-                                      user_id=user_id)
+                        quotas.commit()
                     return
                 except exception.ObjectActionError:
                     instance.refresh()
@@ -1506,9 +1502,7 @@ class API(base.Base):
                         LOG.info(_('Instance is already in deleting state, '
                                    'ignoring this request'), instance=instance)
                         if reservations:
-                            QUOTAS.rollback(context, reservations,
-                                            project_id=project_id,
-                                            user_id=user_id)
+                            quotas.rollback()
                         return
 
                     self._record_action_start(context, instance,
@@ -1522,25 +1516,16 @@ class API(base.Base):
                 # If compute node isn't up, just delete from DB
                 self._local_delete(context, instance, bdms, delete_type, cb)
                 if reservations:
-                    QUOTAS.commit(context,
-                                  reservations,
-                                  project_id=project_id,
-                                  user_id=user_id)
+                    quotas.commit()
                     reservations = None
         except exception.InstanceNotFound:
             # NOTE(comstud): Race condition. Instance already gone.
             if reservations:
-                QUOTAS.rollback(context,
-                                reservations,
-                                project_id=project_id,
-                                user_id=user_id)
+                quotas.rollback()
         except Exception:
             with excutils.save_and_reraise_exception():
                 if reservations:
-                    QUOTAS.rollback(context,
-                                    reservations,
-                                    project_id=project_id,
-                                    user_id=user_id)
+                    quotas.rollback()
 
     def _confirm_resize_on_deleting(self, context, instance):
         # If in the middle of a resize, use confirm_resize to
@@ -1621,13 +1606,14 @@ class API(base.Base):
                     instance_memory_mb = (old_inst_type['memory_mb'] + vram_mb)
                     LOG.debug("going to delete a resizing instance")
 
-        reservations = QUOTAS.reserve(context,
-                                      project_id=project_id,
-                                      user_id=user_id,
-                                      instances=-1,
-                                      cores=-instance_vcpus,
-                                      ram=-instance_memory_mb)
-        return reservations
+        quotas = objects.Quotas(context)
+        quotas.reserve(context,
+                       project_id=project_id,
+                       user_id=user_id,
+                       instances=-1,
+                       cores=-instance_vcpus,
+                       ram=-instance_memory_mb)
+        return quotas
 
     def _local_delete(self, context, instance, bdms, delete_type, cb):
         LOG.warning(_("instance's host %s is down, deleting from "
@@ -1725,7 +1711,7 @@ class API(base.Base):
         """Restore a previously deleted (but not reclaimed) instance."""
         # Reserve quotas
         flavor = instance.get_flavor()
-        num_instances, quota_reservations = self._check_num_instances_quota(
+        num_instances, quotas = self._check_num_instances_quota(
                 context, flavor, 1, 1)
 
         self._record_action_start(context, instance, instance_actions.RESTORE)
@@ -1742,10 +1728,10 @@ class API(base.Base):
                 instance.deleted_at = None
                 instance.save(expected_task_state=[None])
 
-            QUOTAS.commit(context, quota_reservations)
+            quotas.commit()
         except Exception:
             with excutils.save_and_reraise_exception():
-                QUOTAS.rollback(context, quota_reservations)
+                quotas.rollback()
 
     @wrap_check_policy
     @check_instance_lock
