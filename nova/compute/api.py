@@ -330,7 +330,8 @@ class API(base.Base):
 
         # Check the quota
         try:
-            reservations = QUOTAS.reserve(context, instances=max_count,
+            Quotas = quotas_obj.Quotas(context)
+            reservations = Quotas.reserve(context, instances=max_count,
                                           cores=req_cores, ram=req_ram)
         except exception.OverQuota as exc:
             # OK, we exceeded quota; let's figure out why...
