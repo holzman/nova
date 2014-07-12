@@ -5317,7 +5317,7 @@ class ComputeManager(manager.Manager):
         same power state as is in the database.
         """
         db_instances = objects.InstanceList.get_by_host(
-            context, self.host, expected_attrs=['system_metadata', 'metadata'],
+            context, self.host,
             use_slave=True)
 
         num_vm_instances = self.driver.get_num_instances()
