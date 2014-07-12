@@ -1243,8 +1243,7 @@ class API(base.Base):
 
         self._populate_instance_names(instance, num_instances)
 
-        self._populate_instance_shutdown_terminate(instance, image,
-                                                   block_device_mapping,
+        self._populate_instance_shutdown_terminate(instance,
                                                    shutdown_terminate)
 
         self.security_group_api.ensure_default(context)
