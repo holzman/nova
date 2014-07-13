@@ -330,9 +330,9 @@ class API(base.Base):
 
         # Check the quota
         try:
-            Quotas = quotas_obj.Quotas(context)
-            reservations = Quotas.reserve(context, instances=max_count,
-                                          cores=req_cores, ram=req_ram)
+            quotas = quotas_obj.Quotas(context)
+            quotas.reserve(context, instances=max_count,
+                           cores=req_cores, ram=req_ram)
         except exception.OverQuota as exc:
             # OK, we exceeded quota; let's figure out why...
             quotas = exc.kwargs['quotas']
@@ -388,7 +388,7 @@ class API(base.Base):
                                              used=used, allowed=total_allowed,
                                              resource=resource)
 
-        return max_count, reservations
+        return max_count, quotas
 
     def _check_metadata_properties_quota(self, context, metadata=None):
         """Enforce quota limits on metadata properties."""
@@ -806,7 +806,7 @@ class API(base.Base):
             max_count, base_options, boot_meta, security_groups,
             block_device_mapping):
         # Reserve quotas
-        num_instances, quota_reservations = self._check_num_instances_quota(
+        num_instances, quotas = self._check_num_instances_quota(
                 context, instance_type, min_count, max_count)
         LOG.debug("Going to run %s instances..." % num_instances)
         instances = []
@@ -836,10 +836,10 @@ class API(base.Base):
                         except exception.ObjectActionError:
                             pass
                 finally:
-                    QUOTAS.rollback(context, quota_reservations)
+                    quotas.rollback()
 
         # Commit the reservations
-        QUOTAS.commit(context, quota_reservations)
+        quotas.commit()
         return instances
 
     def _get_bdm_image_metadata(self, context, block_device_mapping,
