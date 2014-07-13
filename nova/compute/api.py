@@ -1158,11 +1158,6 @@ class API(base.Base):
                                               shutdown_terminate=False):
         """Populate instance shutdown_terminate information."""
         instance.shutdown_terminate = shutdown_terminate
-#        image_properties = image.get('properties', {})
-#        if (block_device_mapping or
-#            image_properties.get('mappings') or
-#                image_properties.get('block_device_mapping')):
-#            instance.shutdown_terminate = False
 
     def _populate_instance_names(self, instance, num_instances):
         """Populate instance display_name and hostname."""
