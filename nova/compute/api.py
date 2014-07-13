@@ -1454,11 +1454,11 @@ class API(base.Base):
             # NOTE(comstud): If we delete the instance locally, we'll
             # commit the reservations here.  Otherwise, the manager side
             # will commit or rollback the reservations based on success.
-            reservations = self._create_reservations(context,
-                                                     instance,
-                                                     original_task_state,
-                                                     project_id, user_id)
-            quotas = quotas_obj.Quotas.from_reservations(context, reservations, instance)
+            quotas = self._create_reservations(context,
+                                               instance,
+                                               original_task_state,
+                                               project_id, user_id)
+            reservations = quotas.reservations
 
             if self.cell_type == 'api':
                 # NOTE(comstud): If we're in the API cell, we need to
@@ -1613,7 +1613,7 @@ class API(base.Base):
                        instances=-1,
                        cores=-instance_vcpus,
                        ram=-instance_memory_mb)
-        return quotas.reservations
+        return quotas
 
     def _local_delete(self, context, instance, bdms, delete_type, cb):
         LOG.warning(_("instance's host %s is down, deleting from "
